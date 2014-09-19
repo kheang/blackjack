@@ -153,6 +153,7 @@ class Deck
   def deal
     @dealt_card = @deck[0]
     @deck.drop(1)
+    puts "Number of cards left: #{@deck.length}."
     @dealt_card
   end
 
