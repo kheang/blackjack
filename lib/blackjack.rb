@@ -21,8 +21,11 @@ class Game
 
     if user_command == "yes"
       @deck.create_seats(1)
-      show_cards(0)
-      show_cards(1)
+
+      print "Your cards: "
+      show_cards(0,false)
+      print "Dealer cards: "
+      show_cards(1,true)
     else
       puts "Bye!"
     end
@@ -30,8 +33,8 @@ class Game
 
   end
 
-  def show_cards(player)
-    @deck.hands[player].show
+  def show_cards(player,hide_card)
+    @deck.hands[player].show(hide_card)
   end
 
   # def get_wager
@@ -92,10 +95,14 @@ class Hand
     @hand << dealt_card
   end
 
-  def show
-    print "Your cards: "
+  def show(hide_card)
     @hand.each do |card|
-      print "[#{card.face} of #{card.suit}] "
+      if hide_card == true
+        print "[face down card] "
+        hide_card = false
+      else
+        print "[#{card.face} of #{card.suit}] "
+      end
     end
     print "\n"
   end
@@ -136,7 +143,6 @@ class Deck
 
   def deal
     @dealt_card = @deck.shift
-    # puts "Number of cards left: #{@deck.length}."
     @dealt_card
   end
 
@@ -150,21 +156,6 @@ class Deck
         @hands[seat].add_card(deal)
       end
     end
-
-    print @hands
-    #
-    # @num_players = num_players + 1
-    # @seats = [*1..@num_players]
-    # @hands = []
-    #
-    # for turn in 1..2
-    #   @seats.each do |seat|
-    #     @hands[seat] = Hand.new if turn == 1
-    #     @hands[seat].add_card(deal)
-    #   end
-    # end
-    #
-    # print @hands
   end
 
   def shuffle
