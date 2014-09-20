@@ -9,13 +9,22 @@ class Game
 
     @wallet = Wallet.new(100)
 
-    puts "Welcome to Blackjack. Would you like to play? (Y/N)"
+    print "Welcome to Blackjack. Would you like to play? (Y/N) "
 
     user_command = gets.chomp
     print "\n"
     if user_command == "y" || user_command == ""
       set_table
-      puts "(H)it or (S)tand?\n\n"
+      puts ""
+      @deck.hands[0].value
+      puts ""
+
+      @decision == ""
+      until @decision == "s" || @blackjack == true
+        print "(H)it or (S)tand? "
+        @decision = gets.chomp
+        play_turn(@decision)
+      end
 
     else
       puts "Bye!"
@@ -28,23 +37,31 @@ class Game
   end
 
   def set_table
-    system "clear"
-    puts "~ ~ Blackjack ~ ~\n\n"
-
     @deck.create_seats(1)
 
-    @wallet.bet(10)
-    print " | "
-    @wallet.print_balance
-    print "\n\n"
+    print "Dealer Cards: "
+    show_cards(1,true)
+    print "\n"
 
     print "Player Cards: "
     show_cards(0,false)
     print "\n"
 
-    print "Dealer Cards: "
-    show_cards(1,true)
-    print "\n\n"
+    @wallet.bet(10)
+    print " | "
+    @wallet.print_balance
+
+  end
+
+  def play_turn(decision)
+    print "\n"
+    print "Player Cards: "
+    if decision == "h" || decision == ""
+      @deck.hands[0].add_card(@deck.deal)
+      @deck.hands[0].show(false)
+    else
+      puts "You stood!"
+    end
   end
 
 end
@@ -73,10 +90,11 @@ class Wallet
 end
 
 class Hand
-  attr_reader :hand
+  attr_reader :hand, :value
 
   def initialize
     @hand = []
+    @blackjack = false
   end
 
   def add_card(dealt_card)
@@ -84,13 +102,43 @@ class Hand
   end
 
   def show(hide_card)
+    @hide_card = hide_card
     @hand.each do |card|
-      if hide_card == true
+      if @hide_card == true
         print "[hidden card] "
-        hide_card = false
+        @hide_card = false
       else
         print "[#{card.face} of #{card.suit}] "
       end
+    end
+
+    value
+
+    if hide_card == false
+      print "| Value: #{@value}"
+      print "- BLACKJACK!" if @blackjack == true
+      print " - BUST!" if @value.to_i > 21
+      print "\n"
+    end
+
+  end
+
+  def value
+    @value = 0
+    @face_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,"8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
+
+    @hand.each do |card|
+      if card.face != "ace"
+        @value += @face_value_pair[card.face]
+      else
+        @value += 1
+        @value += 10 if (@value + 10) < 21
+      end
+
+      if @value == 21 && @hand.length == 2
+        @blackjack = true
+      end
+
     end
   end
 
@@ -111,11 +159,8 @@ class Deck
 
   def initialize(num_decks)
     @suits = ["clubs","diamonds","hearts","spades"]
-    @rank_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,"8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
+    @faces = ["ace","2","3","4","5","6","7","8","9","10","jack","queen","king"]
     @deck = []
-    @faces = []
-
-    @rank_value_pair.each { |face,value| @faces << face }
 
     num_decks.times do
       @suits.each do |suit|
