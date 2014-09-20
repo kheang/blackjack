@@ -8,22 +8,18 @@ class Game
     @deck.shuffle
 
     @wallet = Wallet.new(100)
-    @wager_amt = 10
-
-    puts "~ Blackjack ~"
 
     puts "Welcome to Blackjack. Would you like to play? (Y/N)"
 
     user_command = gets.chomp
     print "\n"
-    if user_command == "y"
+    if user_command == "y" || user_command == ""
       set_table
-      puts "(H)it or (S)tand?"
+      puts "(H)it or (S)tand?\n\n"
 
     else
       puts "Bye!"
     end
-
 
   end
 
@@ -32,41 +28,24 @@ class Game
   end
 
   def set_table
+    system "clear"
+    puts "~ ~ Blackjack ~ ~\n\n"
+
     @deck.create_seats(1)
 
-    print "Your cards: "
-    show_cards(0,false)
-    print "| "
-    @wallet.bet(@wager_amt)
+    @wallet.bet(10)
     print " | "
     @wallet.print_balance
+    print "\n\n"
+
+    print "Player Cards: "
+    show_cards(0,false)
     print "\n"
 
-    print "Dealer cards: "
+    print "Dealer Cards: "
     show_cards(1,true)
     print "\n\n"
   end
-
-  # def wager
-  #   @wallet.bet(@wager_amt)
-  # end
-  #
-
-  #
-  # def deal(num_cards)
-  #   card_dealt = 0
-  #   num_cards.times do
-  #     card_dealt += 1
-  #     @seats.each do |seat|
-  #       @hands[seat] << @shoe.top_card_key
-  #     end
-  #   end
-  #
-  #   puts @seats
-  #   puts @hands
-  # end
-  #
-
 
 end
 
@@ -80,7 +59,7 @@ class Wallet
   def bet(wager)
     @wager = wager
     @balance -= @wager
-    print "Wager: #{@wager}"
+    print "Wager: $#{@wager}"
   end
 
   def add(winnings)
@@ -88,7 +67,7 @@ class Wallet
   end
 
   def print_balance
-    print "Balance: #{@balance}."
+    print "Remaining Money: $#{@balance}"
   end
 
 end
