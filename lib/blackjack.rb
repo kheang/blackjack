@@ -7,25 +7,19 @@ class Game
     @deck = Deck.new(2)
     @deck.shuffle
 
-    # @shoe = Shoe.new(2).shuffle
-    # @wallet = Wallet.new(100)
-    # @wager_amt = 10
-    # # @num_players = 1
-    # # create_seats(@num_players)
-    #
+    @wallet = Wallet.new(100)
+    @wager_amt = 10
+
     puts "~ Blackjack ~"
 
-    puts "Welcome to Blackjack. Would you like to play? (yes/no)"
+    puts "Welcome to Blackjack. Would you like to play? (Y/N)"
 
     user_command = gets.chomp
+    print "\n"
+    if user_command == "y"
+      set_table
+      puts "(H)it or (S)tand?"
 
-    if user_command == "yes"
-      @deck.create_seats(1)
-
-      print "Your cards: "
-      show_cards(0,false)
-      print "Dealer cards: "
-      show_cards(1,true)
     else
       puts "Bye!"
     end
@@ -37,10 +31,24 @@ class Game
     @deck.hands[player].show(hide_card)
   end
 
-  # def get_wager
-  #   @wallet.print_balance
+  def set_table
+    @deck.create_seats(1)
+
+    print "Your cards: "
+    show_cards(0,false)
+    print "| "
+    @wallet.bet(@wager_amt)
+    print " | "
+    @wallet.print_balance
+    print "\n"
+
+    print "Dealer cards: "
+    show_cards(1,true)
+    print "\n\n"
+  end
+
+  # def wager
   #   @wallet.bet(@wager_amt)
-  #   "puts"
   # end
   #
 
@@ -63,15 +71,16 @@ class Game
 end
 
 class Wallet
-  attr_accessor :balance
+  attr_accessor :balance, :wager
 
   def initialize(initial_money)
     @balance = initial_money.to_i
   end
 
   def bet(wager)
-    @balance -= wager
-    puts "You must bet $#{wager}. You now have $#{@balance} in chips left (excluding bet)."
+    @wager = wager
+    @balance -= @wager
+    print "Wager: #{@wager}"
   end
 
   def add(winnings)
@@ -79,7 +88,7 @@ class Wallet
   end
 
   def print_balance
-    puts "You have #{@balance}."
+    print "Balance: #{@balance}."
   end
 
 end
@@ -98,13 +107,12 @@ class Hand
   def show(hide_card)
     @hand.each do |card|
       if hide_card == true
-        print "[face down card] "
+        print "[hidden card] "
         hide_card = false
       else
         print "[#{card.face} of #{card.suit}] "
       end
     end
-    print "\n"
   end
 
 end
