@@ -4,40 +4,23 @@ end
 
 class Game
   def initialize
-    @deck = Deck.new(2)
-    @deck.shuffle
-    @blackjack = false
-    @value = 0
-    play_again = ""
-
-    @wallet = Wallet.new(100)
-
     print "Welcome to Blackjack. Would you like to play? (Y/N) "
-
     user_command = gets.chomp
 
     if user_command == "y" || user_command == ""
-      set_table
+      @wallet = Wallet.new(100)
+      @min_bet = 10
 
-      until play_again == "n"
+      play_again = ""
 
-        @decision = ""
-        until @decision == "s"
-          if @deck.hands[0].blackjack == false && @deck.hands[-1].blackjack == false && @deck.hands[0].value < 21
-            print "\n\n(H)it or (S)tand? "
-            @decision = gets.chomp
-            play_turn(0,@decision)
-          else
-            @decision = "s"
-            play_turn(0,@decision)
-          end
+      until play_again == "n" || @wallet.balance < @min_bet
+        set_table
+        if @wallet.balance >= @min_bet
+          print " | Play another hand? (Y/N)"
+          play_again = gets.chomp
         end
-
-        print "\n\nPlay another hand? (Y/N)"
-        play_again = gets.chomp
-
       end
-
+      puts "\nOut of money! Game over. Bye!"
     else
       puts "Bye!"
     end
@@ -49,22 +32,40 @@ class Game
   end
 
   def set_table
+    @deck = Deck.new(2)
+    @deck.shuffle
     @deck.create_seats(1)
 
-    @wallet.bet(10)
-    print " | "
+    @wallet.bet(@min_bet)
     @wallet.print_balance
 
-    print "\n\nPlayer Cards: "
+    @decision = ""
+
+    print "\nPlayer Cards: "
     show_cards(0,false)
 
     print "\nDealer Cards: "
     if @deck.hands[-1].blackjack == true
       show_cards(1,false)
-      @decision = "s"
-      play_turn(0,@decision)
+      eval_turn(0)
     else
-      show_cards(1,true)
+      if @deck.hands[0].blackjack == true
+        play_turn(0,"s")
+      else
+        show_cards(1,true)
+
+        until @decision == "s"
+          if @deck.hands[0].value < 21
+            print "\n\n(H)it or (S)tand? "
+            @decision = gets.chomp
+            play_turn(0,@decision)
+          else
+            @decision = "s"
+            play_turn(0,"@decision")
+          end
+        end
+
+      end
     end
 
   end
@@ -86,37 +87,29 @@ class Game
 
   def eval_turn(player)
     if @deck.hands[player].bust == true
-
       if @deck.hands[-1].bust == true
         result_push
       else
         result_lose
       end
-
     elsif @deck.hands[player].blackjack == true
-
       if @deck.hands[-1].blackjack == true
         result_push
       else
         result_win
       end
-
     elsif @deck.hands[player].value == @deck.hands[-1].value
-
       if @deck.hands[-1].blackjack == true
         result_lose
       else
         result_push
       end
-
     elsif @deck.hands[player].value < @deck.hands[-1].value
-
       if @deck.hands[-1].bust == true
         result_win
       else
         result_lose
       end
-
     else
       result_win
     end
@@ -134,18 +127,19 @@ class Game
   end
 
   def result_push
-    print "\n\nPush! | "
+    @wallet.add(@wallet.wager)
+    print "\n\nPush!"
   end
 
   def result_win
-    winnings = @wallet.wager
-    winnings *= 1.5 if @deck.hands[0].blackjack == true
+    winnings = @wallet.wager * 2
+    winnings += @wallet.wager * 0.5 if @deck.hands[0].blackjack == true
     @wallet.add(winnings)
-    print "\n\nPlayer wins! | "
+    print "\n\nPlayer wins!"
   end
 
   def result_lose
-    print "\n\nYou lose! | "
+    print "\n\nYou lose!"
   end
 
 end
@@ -168,7 +162,7 @@ class Wallet
   end
 
   def print_balance
-    print "Remaining Money: $#{@balance}"
+    print " | Remaining Money: $#{@balance}"
   end
 
 end
@@ -199,9 +193,9 @@ class Hand
     end
 
     if hide_card == false
-      print "| Value: #{@value}"
+      print "| Value: #{@value} "
       print "- BLACKJACK!" if @blackjack == true
-      print " - BUST!" if @value > 21
+      print "- BUST!" if @value > 21
     end
 
   end
