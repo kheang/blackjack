@@ -6,9 +6,9 @@ class Game
   def initialize
     @deck = Deck.new(2)
     @deck.shuffle
-    @decision = ""
     @blackjack = false
     @value = 0
+    play_again = ""
 
     @wallet = Wallet.new(100)
 
@@ -19,15 +19,23 @@ class Game
     if user_command == "y" || user_command == ""
       set_table
 
-      until @decision == "s"
-        if @deck.hands[0].blackjack != true || @deck.hands[0].value < 21
-          print "\n(H)it or (S)tand? "
-          @decision = gets.chomp
-          play_turn(0,@decision)
-        else
-          @decision = "s"
-          play_turn(0,@decision)
+      until play_again == "n"
+
+        @decision = ""
+        until @decision == "s"
+          if @deck.hands[0].blackjack == false && @deck.hands[-1].blackjack == false && @deck.hands[0].value < 21
+            print "\n\n(H)it or (S)tand? "
+            @decision = gets.chomp
+            play_turn(0,@decision)
+          else
+            @decision = "s"
+            play_turn(0,@decision)
+          end
         end
+
+        print "\n\nPlay another hand? (Y/N)"
+        play_again = gets.chomp
+
       end
 
     else
@@ -43,50 +51,101 @@ class Game
   def set_table
     @deck.create_seats(1)
 
-    print "Dealer Cards: "
-    show_cards(1,true)
-    print "\n"
-
-    print "Player Cards: "
-    show_cards(0,false)
-    print "\n"
-
     @wallet.bet(10)
     print " | "
     @wallet.print_balance
+
+    print "\n\nPlayer Cards: "
+    show_cards(0,false)
+
+    print "\nDealer Cards: "
+    if @deck.hands[-1].blackjack == true
+      show_cards(1,false)
+      @decision = "s"
+      play_turn(0,@decision)
+    else
+      show_cards(1,true)
+    end
 
   end
 
   def play_turn(player,decision)
     if decision == "h" || decision == ""
-      print "\nPlayer Cards: "
-      @deck.hands[player].add_card(@deck.deal)
-      @deck.hands[player].show(false)
+      hit(player)
     else
+      dealer
       eval_turn(player)
     end
   end
 
+  def hit(player)
+    print "\nPlayer Cards: "
+    @deck.hands[player].add_card(@deck.deal)
+    @deck.hands[player].show(false)
+  end
+
   def eval_turn(player)
-    if @deck.hands[player].value == @deck.hands[-1].value
-      if @deck.hands[player].blackjack == true && @deck.hands[-1].blackjack == true
-        puts "\nPush!"
-      elsif @deck.hands[player].blackjack == true
-        puts "\nPlayer wins"
-      elsif @deck.hands[-1].blackjack == true
-        puts "\nYou lose!"
+    if @deck.hands[player].bust == true
+
+      if @deck.hands[-1].bust == true
+        result_push
       else
-        puts "\nPush!"
+        result_lose
       end
-    elsif 100 > 0
-      if @deck.hands[player].value <= 21
-        puts "\nPlayer wins!"
+
+    elsif @deck.hands[player].blackjack == true
+
+      if @deck.hands[-1].blackjack == true
+        result_push
       else
-        puts "\nYou lose!"
+        result_win
       end
-    elsif @deck.hands[player].value < @deck.hands[-1].value && deck.hands[-1].value <= 21
-      puts "\nYou lose!"
+
+    elsif @deck.hands[player].value == @deck.hands[-1].value
+
+      if @deck.hands[-1].blackjack == true
+        result_lose
+      else
+        result_push
+      end
+
+    elsif @deck.hands[player].value < @deck.hands[-1].value
+
+      if @deck.hands[-1].bust == true
+        result_win
+      else
+        result_lose
+      end
+
+    else
+      result_win
     end
+
+    @wallet.print_balance
+
+  end
+
+  def dealer
+    until @deck.hands[-1].value  >= 17
+      @deck.hands[-1].add_card(@deck.deal)
+    end
+    print "\nDealer Cards: "
+    @deck.hands[-1].show(false)
+  end
+
+  def result_push
+    print "\n\nPush! | "
+  end
+
+  def result_win
+    winnings = @wallet.wager
+    winnings *= 1.5 if @deck.hands[0].blackjack == true
+    @wallet.add(winnings)
+    print "\n\nPlayer wins! | "
+  end
+
+  def result_lose
+    print "\n\nYou lose! | "
   end
 
 end
@@ -101,7 +160,7 @@ class Wallet
   def bet(wager)
     @wager = wager
     @balance -= @wager
-    print "Wager: $#{@wager}"
+    print "\nWager: $#{@wager}"
   end
 
   def add(winnings)
@@ -115,17 +174,17 @@ class Wallet
 end
 
 class Hand
-  attr_reader :hand, :value, :blackjack
+  attr_reader :hand, :value, :blackjack, :bust
 
   def initialize
     @hand = []
     @blackjack = false
+    @bust = false
   end
 
   def add_card(dealt_card)
     @hand << dealt_card
     value
-    @hand
   end
 
   def show(hide_card)
@@ -139,33 +198,37 @@ class Hand
       end
     end
 
-    value
-
     if hide_card == false
       print "| Value: #{@value}"
       print "- BLACKJACK!" if @blackjack == true
-      print " - BUST!" if @value.to_i > 21
-      print "\n"
+      print " - BUST!" if @value > 21
     end
 
   end
 
   def value
-    @value = 0
-    @face_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,"8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
+    @face_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,
+      "8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
 
-    @hand.each do |card|
-      if card.face != "ace"
-        @value += @face_value_pair[card.face]
-      else
-        @value += 1
-        @value += 10 if (@value + 10) < 21
+    2.times do
+      @value = 0
+      @hand.each do |card|
+        if card.face != "ace"
+          @value += @face_value_pair[card.face]
+        else
+          @value += 1
+          @value += 10 if (@value + 10) <= 21 && @bust == false
+        end
+        if @value > 21
+          @bust = true
+        else
+          @bust = false
+        end
       end
+    end
 
-      if @value == 21 && @hand.length == 2
-        @blackjack = true
-      end
-
+    if @value == 21 && @hand.length == 2
+      @blackjack = true
     end
 
     @value
@@ -215,8 +278,10 @@ class Deck
       for seat in 0..num_players
         @hands[seat] = Hand.new if turn == 1
         @hands[seat].add_card(deal)
+        @hands[seat].value
       end
     end
+
   end
 
   def shuffle
