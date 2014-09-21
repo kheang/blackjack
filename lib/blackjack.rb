@@ -6,24 +6,28 @@ class Game
   def initialize
     @deck = Deck.new(2)
     @deck.shuffle
+    @decision = ""
+    @blackjack = false
+    @value = 0
 
     @wallet = Wallet.new(100)
 
     print "Welcome to Blackjack. Would you like to play? (Y/N) "
 
     user_command = gets.chomp
-    print "\n"
+
     if user_command == "y" || user_command == ""
       set_table
-      puts ""
-      @deck.hands[0].value
-      puts ""
 
-      @decision == ""
-      until @decision == "s" || @blackjack == true
-        print "(H)it or (S)tand? "
-        @decision = gets.chomp
-        play_turn(@decision)
+      until @decision == "s"
+        if @deck.hands[0].blackjack != true || @deck.hands[0].value < 21
+          print "\n(H)it or (S)tand? "
+          @decision = gets.chomp
+          play_turn(0,@decision)
+        else
+          @decision = "s"
+          play_turn(0,@decision)
+        end
       end
 
     else
@@ -53,14 +57,35 @@ class Game
 
   end
 
-  def play_turn(decision)
-    print "\n"
-    print "Player Cards: "
+  def play_turn(player,decision)
     if decision == "h" || decision == ""
-      @deck.hands[0].add_card(@deck.deal)
-      @deck.hands[0].show(false)
+      print "\nPlayer Cards: "
+      @deck.hands[player].add_card(@deck.deal)
+      @deck.hands[player].show(false)
     else
-      puts "You stood!"
+      eval_turn(player)
+    end
+  end
+
+  def eval_turn(player)
+    if @deck.hands[player].value == @deck.hands[-1].value
+      if @deck.hands[player].blackjack == true && @deck.hands[-1].blackjack == true
+        puts "\nPush!"
+      elsif @deck.hands[player].blackjack == true
+        puts "\nPlayer wins"
+      elsif @deck.hands[-1].blackjack == true
+        puts "\nYou lose!"
+      else
+        puts "\nPush!"
+      end
+    elsif 100 > 0
+      if @deck.hands[player].value <= 21
+        puts "\nPlayer wins!"
+      else
+        puts "\nYou lose!"
+      end
+    elsif @deck.hands[player].value < @deck.hands[-1].value && deck.hands[-1].value <= 21
+      puts "\nYou lose!"
     end
   end
 
@@ -90,7 +115,7 @@ class Wallet
 end
 
 class Hand
-  attr_reader :hand, :value
+  attr_reader :hand, :value, :blackjack
 
   def initialize
     @hand = []
@@ -99,6 +124,8 @@ class Hand
 
   def add_card(dealt_card)
     @hand << dealt_card
+    value
+    @hand
   end
 
   def show(hide_card)
@@ -140,6 +167,8 @@ class Hand
       end
 
     end
+
+    @value
   end
 
 end
