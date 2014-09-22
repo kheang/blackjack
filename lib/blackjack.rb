@@ -4,14 +4,15 @@ class Game
     user_command = gets.chomp
 
     if user_command == "y" || user_command == ""
-      @deck = Deck.new(2)
+      @deck = Deck.new(5)
+      @deck.shuffle
       @wallet = Wallet.new(100)
       @min_bet = 10
 
       play_again = ""
 
       until play_again == "n" || @wallet.balance < @min_bet
-        set_table
+        deal
         if @wallet.balance >= @min_bet
           print " | Play another hand? (Y/N)"
           play_again = gets.chomp
@@ -28,11 +29,18 @@ class Game
     @deck.hands[player].show(hide_card)
   end
 
-  def set_table
-    @deck.shuffle
+  def deal
     @deck.create_seats(1)
 
-    @wallet.bet(@min_bet)
+    wager = 0
+    until wager >= @min_bet && wager <= @wallet.balance
+      print "\nMoney: #{@wallet.balance} | Enter Bet $[XX] (min. $10): "
+      wager = gets.chomp.to_i
+      wager = 10 if wager == ""
+      puts "Not enough money." if wager > @wallet.balance
+    end
+
+    @wallet.bet(wager)
     @wallet.print_balance
 
     @decision = ""
@@ -234,6 +242,10 @@ class Deck
 
   def deal
     @dealt_card = @deck.shift
+    if @deck.length == 0
+      initialize(5)
+      @deck.shuffle
+    end
     @dealt_card
   end
 
