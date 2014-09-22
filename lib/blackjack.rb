@@ -114,14 +114,10 @@ class Game
 
   def dealer
     print "\nDealer Cards: "
-    if @deck.hands[-1].blackjack == true
-      @deck.hands[-1].show(true)
-    else
       until @deck.hands[-1].value  >= 17
         @deck.hands[-1].add_card(@deck.deal)
       end
       @deck.hands[-1].show(false)
-    end
   end
 
   def result_push
