@@ -1,13 +1,10 @@
-def run_game
-  game = Game.new
-end
-
 class Game
   def initialize
     print "Welcome to Blackjack. Would you like to play? (Y/N) "
     user_command = gets.chomp
 
     if user_command == "y" || user_command == ""
+      @deck = Deck.new(2)
       @wallet = Wallet.new(100)
       @min_bet = 10
 
@@ -20,11 +17,11 @@ class Game
           play_again = gets.chomp
         end
       end
-      puts "\nOut of money! Game over. Bye!"
+      puts "\nNot enough money!" if @wallet.balance < @min_bet
+      puts "\nGame over!"
     else
-      puts "Bye!"
+      puts "\nMaybe next time. Bye!"
     end
-
   end
 
   def show_cards(player,hide_card)
@@ -32,7 +29,6 @@ class Game
   end
 
   def set_table
-    @deck = Deck.new(2)
     @deck.shuffle
     @deck.create_seats(1)
 
@@ -44,50 +40,32 @@ class Game
     print "\nPlayer Cards: "
     show_cards(0,false)
 
-    print "\nDealer Cards: "
-    if @deck.hands[-1].blackjack == true
-      show_cards(1,false)
-      eval_turn(0)
-    else
-      if @deck.hands[0].blackjack == true
-        play_turn(0,"s")
-      else
-        show_cards(1,true)
+    if @deck.hands[0].blackjack == false && @deck.hands[-1].blackjack == false
+      print "\nDealer Cards: "
+      show_cards(1,true)
 
-        until @decision == "s"
-          if @deck.hands[0].value < 21
-            print "\n\n(H)it or (S)tand? "
-            @decision = gets.chomp
-            play_turn(0,@decision)
-          else
-            @decision = "s"
-            play_turn(0,"@decision")
-          end
-        end
-
+      until @decision == "s" || @deck.hands[0].value >= 21
+        print "\n\n(H)it or (S)tand? "
+        @decision = gets.chomp
+        hit(0) if @decision == "h" || @decision == ""
       end
     end
 
-  end
+    dealer
+    eval_turn(0)
+    @wallet.print_balance
 
-  def play_turn(player,decision)
-    if decision == "h" || decision == ""
-      hit(player)
-    else
-      dealer
-      eval_turn(player)
-    end
   end
 
   def hit(player)
-    print "\nPlayer Cards: "
-    @deck.hands[player].add_card(@deck.deal)
-    @deck.hands[player].show(false)
+      print "\nPlayer Cards: "
+      @deck.hands[player].add_card(@deck.deal)
+      @deck.hands[player].show(false)
   end
 
   def eval_turn(player)
-    if @deck.hands[player].bust == true
-      if @deck.hands[-1].bust == true
+    if @deck.hands[player].value > 21
+      if @deck.hands[-1].value > 21
         result_push
       else
         result_lose
@@ -105,7 +83,7 @@ class Game
         result_push
       end
     elsif @deck.hands[player].value < @deck.hands[-1].value
-      if @deck.hands[-1].bust == true
+      if @deck.hands[-1].value > 21
         result_win
       else
         result_lose
@@ -113,17 +91,18 @@ class Game
     else
       result_win
     end
-
-    @wallet.print_balance
-
   end
 
   def dealer
-    until @deck.hands[-1].value  >= 17
-      @deck.hands[-1].add_card(@deck.deal)
-    end
     print "\nDealer Cards: "
-    @deck.hands[-1].show(false)
+    if @deck.hands[-1].blackjack == true
+      @deck.hands[-1].show(true)
+    else
+      until @deck.hands[-1].value  >= 17
+        @deck.hands[-1].add_card(@deck.deal)
+      end
+      @deck.hands[-1].show(false)
+    end
   end
 
   def result_push
@@ -168,12 +147,11 @@ class Wallet
 end
 
 class Hand
-  attr_reader :hand, :value, :blackjack, :bust
+  attr_reader :hand, :value, :blackjack
 
   def initialize
     @hand = []
     @blackjack = false
-    @bust = false
   end
 
   def add_card(dealt_card)
@@ -211,12 +189,7 @@ class Hand
           @value += @face_value_pair[card.face]
         else
           @value += 1
-          @value += 10 if (@value + 10) <= 21 && @bust == false
-        end
-        if @value > 21
-          @bust = true
-        else
-          @bust = false
+          @value += 10 if (@value + 10) <= 21
         end
       end
     end
@@ -284,4 +257,4 @@ class Deck
 
 end
 
-run_game
+game = Game.new
