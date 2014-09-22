@@ -32,15 +32,14 @@ class Game
   def deal
     @deck.create_seats(1)
 
-    wager = 0
-    until wager >= @min_bet && wager <= @wallet.balance
+    @wager = 0
+    until @wager >= @min_bet && @wager <= @wallet.balance
       print "\nMoney: #{@wallet.balance} | Enter Bet $[XX] (min. $10): "
-      wager = gets.chomp.to_i
-      wager = 10 if wager == ""
-      puts "Not enough money." if wager > @wallet.balance
+      @wager = gets.chomp.to_i
+      puts "Not enough money." if @wager > @wallet.balance
     end
 
-    @wallet.bet(wager)
+    @wallet.bet(@wager)
     @wallet.print_balance
 
     @decision = ""
@@ -52,11 +51,22 @@ class Game
       print "\nDealer Cards: "
       show_cards(1,true)
 
+      @turn = 1
       until @decision == "s" || @deck.hands[0].value >= 21
-        print "\n\n(H)it or (S)tand? "
+        print "\n\n(H)it or (S)tand"
+        print " or (D)ouble down" if @turn == 1
+        print "?"
         @decision = gets.chomp
-        hit(0) if @decision == "h" || @decision == ""
+        hit(0) if @decision == "h" || @decision == "" || @decision == "d"
+        if @decision == "d"
+          print "\nAdditional "
+          @wallet.bet(@wager)
+          @wager *= 2
+          @decision = "s"
+        end
+        @turn += 1
       end
+      @decision = ""
     end
 
     dealer
@@ -119,14 +129,15 @@ class Game
   end
 
   def result_win
-    winnings = @wallet.wager * 2
-    winnings += @wallet.wager * 0.5 if @deck.hands[0].blackjack == true
+    winnings = @wager * 2
+    winnings += @wager * 0.5 if @deck.hands[0].blackjack == true
     @wallet.add(winnings)
-    print "\n\nPlayer wins!"
+    profit = winnings - @wager
+    print "\n\nPlayer wins $#{profit}!"
   end
 
   def result_lose
-    print "\n\nYou lose!"
+    print "\n\nYou lose #{@wager}!"
   end
 
 end
@@ -141,7 +152,7 @@ class Wallet
   def bet(wager)
     @wager = wager
     @balance -= @wager
-    print "\nWager: $#{@wager}"
+    print "Wager: $#{@wager}"
   end
 
   def add(winnings)
