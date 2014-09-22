@@ -36,6 +36,7 @@ class Game
     until @wager >= @min_bet && @wager <= @wallet.balance
       print "\nMoney: #{@wallet.balance} | Enter Bet $[XX] (min. $10): "
       @wager = gets.chomp.to_i
+      @wager = 10 if @wager == 0
       puts "Not enough money." if @wager > @wallet.balance
     end
 
@@ -201,6 +202,7 @@ class Hand
     @face_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,
       "8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
 
+    bust = false
     2.times do
       @value = 0
       @hand.each do |card|
@@ -208,8 +210,9 @@ class Hand
           @value += @face_value_pair[card.face]
         else
           @value += 1
-          @value += 10 if (@value + 10) <= 21
+          @value += 10 if (@value + 10) <= 21 && bust == false
         end
+        bust = true if @value > 21
       end
     end
 
@@ -229,7 +232,6 @@ class Card
     @suit = suit
     @face = face
   end
-
 end
 
 class Deck
@@ -277,7 +279,6 @@ class Deck
   def shuffle
     @deck = @deck.shuffle
   end
-
 end
 
 game = Game.new
