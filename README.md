@@ -2,7 +2,7 @@
 
 This ruby project is a simple blackjack game that runs in the command-line interface.  The game was a weekend project after completing week 1 of The Iron Yard Academy's (TIY) Ruby on Rails track in Durham, NC.
 
-## Assignment Requirements
+## Project Requirements
 
 Verbatim from TIY instructor: Create a game of blackjack that one person plays on the command line against a computer dealer.
 
@@ -30,5 +30,5 @@ ruby lib/blackjack.rb
 
 I would love to do the following when I have some time:
 
-* Revisit my code and refactor it
+* Revisit my code and refactor it; this code was written after just one week at The Iron Yard
 * Instead of having this run in the terminal, run in the browser and use javascript to render cards
