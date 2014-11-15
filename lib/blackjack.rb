@@ -1,20 +1,20 @@
 class Game
   def initialize
-    print "Welcome to Blackjack. Would you like to play? (Y/N) "
-    user_command = gets.chomp
+    print 'Welcome to Blackjack. Would you like to play? (Y/N) '
+    user_command = gets.chomp.downcase
 
-    if user_command == "y" || user_command == ""
+    if user_command == 'y' || user_command == ''
       @deck = Deck.new(5)
       @deck.shuffle
       @wallet = Wallet.new(100)
       @min_bet = 10
 
-      play_again = ""
+      play_again = ''
 
-      until play_again == "n" || @wallet.balance < @min_bet
+      until play_again == 'n' || @wallet.balance < @min_bet
         deal
         if @wallet.balance >= @min_bet
-          print " | Play another hand? (Y/N)"
+          print ' | Play another hand? (Y/N)'
           play_again = gets.chomp
         end
       end
@@ -37,15 +37,15 @@ class Game
       print "\nMoney: #{@wallet.balance} | Enter Bet $[XX] (min. $10): "
       @wager = gets.chomp.to_i
       @wager = 10 if @wager == 0
-      puts "Not enough money." if @wager > @wallet.balance
+      puts 'Not enough money.' if @wager > @wallet.balance
     end
 
     @wallet.bet(@wager)
     @wallet.print_balance
 
-    @decision = ""
+    @decision = ''
 
-    print "\nPlayer Cards: "
+    print "\nPlayer Cards:"
     show_cards(0,false)
 
     if @deck.hands[0].blackjack == false && @deck.hands[-1].blackjack == false
@@ -53,21 +53,21 @@ class Game
       show_cards(1,true)
 
       @turn = 1
-      until @decision == "s" || @deck.hands[0].value >= 21
+      until @decision == 's' || @deck.hands[0].value >= 21
         print "\n\n(H)it or (S)tand"
-        print " or (D)ouble down" if @turn == 1
-        print "?"
+        print ' or (D)ouble down' if @turn == 1
+        print '?'
         @decision = gets.chomp
-        hit(0) if @decision == "h" || @decision == "" || @decision == "d"
-        if @decision == "d"
+        hit(0) if @decision == 'h' || @decision == '' || @decision == 'd'
+        if @decision == 'd'
           print "\nAdditional "
           @wallet.bet(@wager)
           @wager *= 2
-          @decision = "s"
+          @decision = 's'
         end
         @turn += 1
       end
-      @decision = ""
+      @decision = ''
     end
 
     dealer
@@ -179,7 +179,7 @@ class Hand
     @hide_card = hide_card
     @hand.each do |card|
       if @hide_card == true
-        print "[hidden card] "
+        print '[hidden card] '
         @hide_card = false
       else
         print "[#{card.face} of #{card.suit}] "
@@ -189,20 +189,20 @@ class Hand
     if hide_card == false
       print "| Value: #{@value} "
       print "- BLACKJACK!" if @blackjack == true
-      print "- BUST!" if @value > 21
+      print '- BUST!' if @value > 21
     end
 
   end
 
   def value
-    @face_value_pair = {"ace"=>[1,11],"2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,
-      "8"=>8,"9"=>9,"10"=>10,"jack"=>10,"queen"=>10,"king"=>10}
+    @face_value_pair = {'ace'=>[1,11],'2'=>2,'3'=>3,'4'=>4,'5'=>5,'6'=>6,'7'=>7,
+      '8'=>8,'9'=>9,'10'=>10,'jack'=>10,'queen'=>10,'king'=>10}
 
     bust = false
     2.times do
       @value = 0
       @hand.each do |card|
-        if card.face != "ace"
+        if card.face != 'ace'
           @value += @face_value_pair[card.face]
         else
           @value += 1
@@ -234,8 +234,8 @@ class Deck
   attr_reader :deck, :hands
 
   def initialize(num_decks)
-    @suits = ["clubs","diamonds","hearts","spades"]
-    @faces = ["ace","2","3","4","5","6","7","8","9","10","jack","queen","king"]
+    @suits = ['clubs','diamonds','hearts','spades']
+    @faces = ['ace','2','3','4','5','6','7','8','9','10','jack','queen','king']
     @deck = []
 
     num_decks.times do
